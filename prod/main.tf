@@ -1,17 +1,7 @@
-//terraform {
-//  backend "remote" {
-//    organization = "chicode"
-//
-//    workspaces {
-//      name = "robot-rumble"
-//    }
-//  }
-//}
+// from: https://github.com/Oxalide/terraform-fargate-example/blob/master/main.tf
 
 provider "aws" {
   region = var.aws_region
-  //  access_key = var.aws_access_key
-  //  secret_key = var.aws_secret_key
 }
 
 resource "aws_ecs_cluster" "main" {
@@ -21,8 +11,7 @@ resource "aws_ecs_cluster" "main" {
 resource "aws_ecs_task_definition" "app" {
   family = "app"
   network_mode = "awsvpc"
-  requires_compatibilities = [
-    "FARGATE"]
+  requires_compatibilities = ["FARGATE"]
   cpu = var.fargate_cpu
   memory = var.fargate_memory
 
@@ -36,9 +25,17 @@ resource "aws_ecs_task_definition" "app" {
     "networkMode": "awsvpc",
     "portMappings": [
       {
-        "containerPort": ${var.app_port},
-        "hostPort": ${var.app_port}
+        "containerPort": ${var.app_port}
       }
+    ],
+    "environment": [
+      { "name": "SECRET_KEY", "value": "${var.secret_key}" },
+      { "name": "BATTLE_QUEUE_IN_URL", "value": "${aws_sqs_queue.battle_queue_in.id}" },
+      { "name": "BATTLE_QUEUE_OUT_URL", "value": "${aws_sqs_queue.battle_queue_out.id}" },
+      { "name": "DB_USER", "value": "${var.rds_username}" },
+      { "name": "DB_PASSWORD", "value": "${var.rds_password}" },
+      { "name": "DB_ENDPOINT", "value": "${aws_db_instance.default.endpoint}" },
+      { "name": "DB_NAME", "value": "${var.rds_name}" }
     ]
   }
 ]
@@ -91,43 +88,46 @@ resource "aws_ecs_service" "backend" {
   }
 }
 
+
 resource "aws_s3_bucket" "static_files" {
   bucket = "robot-static-files"
   acl = "public-read"
 }
 
-resource "aws_s3_bucket" "lambda_files" {
-  bucket = "robot-runner-lambda"
-  acl = "public-read"
+resource "aws_s3_bucket_object" "lambda" {
+  bucket = aws_s3_bucket.static_files.bucket
+  key = "lambda.zip"
+  source = "../../logic/target/x86_64-unknown-linux-musl/release/lambda.zip"
 }
 
-resource "aws_sqs_queue" "battle_input_queue" {
-  name = "battle_input_queue.fifo"
-  fifo_queue = true
-  content_based_deduplication = true
+resource "aws_sqs_queue" "battle_queue_in" {
+  name = "battle-input-queue"
 }
 
-resource "aws_sqs_queue" "battle_output_queue" {
-  name = "battle_output_queue.fifo"
-  fifo_queue = true
-  content_based_deduplication = true
+resource "aws_sqs_queue" "battle_queue_out" {
+  name = "battle-output-queue"
 }
 
 resource "aws_lambda_function" "battle_runner" {
-  s3_bucket = aws_s3_bucket.lambda_files.id
-  s3_key = "main"
-  function_name = "battler_runner"
+  s3_bucket = aws_s3_bucket.static_files.id
+  s3_key = aws_s3_bucket_object.lambda.key
+  function_name = "battle-runner"
   runtime = "provided"
   timeout = var.lambda_timeout
   memory_size = var.lambda_memory_size
   handler = "doesnt.matter"
-  role = aws_iam_role.iam_for_lambda.arn
+  role = aws_iam_role.lambda.arn
+  environment {
+    variables = {
+      RUST_BACKTRACE = 1
+      BATTLE_QUEUE_OUT_URL = aws_sqs_queue.battle_queue_out.id
+    }
+  }
 }
 
 resource "aws_iam_policy" "lambda" {
-  name        = "lambda_logging"
-  path        = "/"
-  description = "IAM policy for logging from a lambda"
+  name = "lambda_logging"
+  path = "/"
 
   policy = <<EOF
 {
@@ -151,12 +151,12 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "lambda" {
-  role       = aws_iam_role.iam_for_lambda.name
+  role = aws_iam_role.lambda.name
   policy_arn = aws_iam_policy.lambda.arn
 }
 
-resource "aws_iam_role" "iam_for_lambda" {
-  name = "iam_for_lambda"
+resource "aws_iam_role" "lambda" {
+  name = "lambda-iam"
 
   assume_role_policy = <<EOF
 {
@@ -175,13 +175,8 @@ resource "aws_iam_role" "iam_for_lambda" {
 EOF
 }
 
-resource "aws_lambda_event_source_mapping" "input_queue_mapping" {
-  event_source_arn = aws_sqs_queue.battle_input_queue.arn
-  function_name = aws_lambda_function.battle_runner.arn
-}
-
-resource "aws_lambda_event_source_mapping" "output_queue_mapping" {
-  event_source_arn = aws_sqs_queue.battle_output_queue.arn
+resource "aws_lambda_event_source_mapping" "battle_queue_in" {
+  event_source_arn = aws_sqs_queue.battle_queue_in.arn
   function_name = aws_lambda_function.battle_runner.arn
 }
 
@@ -197,6 +192,5 @@ resource "aws_db_instance" "default" {
   password = var.rds_password
   vpc_security_group_ids = [
     data.aws_security_group.default.id]
+  multi_az = false
 }
-
-

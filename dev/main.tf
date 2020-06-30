@@ -22,12 +22,13 @@ resource "aws_s3_bucket" "lambda" {
 
 resource "aws_s3_bucket_object" "lambda" {
   bucket = aws_s3_bucket.lambda.bucket
-  key    = "lambda.zip"
-  source = "../../logic/target/debug/lambda.zip"
+  key = "lambda.zip"
+  source = "../../logic/target/x86_64-unknown-linux-musl/release/lambda.zip"
 }
 
 resource "aws_lambda_function" "battle_runner" {
-  depends_on = [aws_s3_bucket_object.lambda, aws_sqs_queue.battle_queue_out]
+  depends_on = [
+    aws_s3_bucket_object.lambda]
   s3_bucket = aws_s3_bucket.lambda.id
   s3_key = aws_s3_bucket_object.lambda.key
   function_name = "dev-battle-runner"

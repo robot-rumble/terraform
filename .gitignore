@@ -32,3 +32,6 @@ override.tf.json
 
 ### IntelliJ
 .idea
+
+### Other
+secret.tfvars

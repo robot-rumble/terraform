@@ -2,11 +2,8 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
-//variable "aws_access_key" {}
-//variable "aws_secret_key" {}
-
 variable "app_image" {
-  default = "docker.pkg.github.com/phanatic/repo/app:1.0"
+  default = "docker.pkg.github.com/robot-rumble/backend/robot-rumble:1.0-snapshot"
 }
 
 variable "app_port" {
@@ -54,3 +51,5 @@ variable "lambda_memory_size" {
 variable "lambda_timeout" {
   default = 10
 }
+
+variable "secret_key" {}
