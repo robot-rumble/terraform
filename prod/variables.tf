@@ -53,3 +53,4 @@ variable "lambda_timeout" {
 }
 
 variable "secret_key" {}
+variable "gh_token" {}

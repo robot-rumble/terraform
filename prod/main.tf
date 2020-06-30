@@ -8,18 +8,95 @@ resource "aws_ecs_cluster" "main" {
   name = "backend-cluster"
 }
 
+resource "aws_secretsmanager_secret" "gh_docker" {
+  name = "gh-docker"
+}
+
+resource "aws_secretsmanager_secret_version" "gh_auth" {
+  secret_id = aws_secretsmanager_secret.gh_docker.id
+  secret_string = <<EOF
+{
+  "username" : "outkine",
+  "password" : "${var.gh_token}"
+}
+EOF
+}
+
+resource "aws_iam_policy" "ecs" {
+  name = "ecs"
+  path = "/"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+        "Effect": "Allow",
+        "Action": [
+            "ecr:GetAuthorizationToken",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:BatchGetImage",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+        ],
+        "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "secretsmanager:GetSecretValue"
+      ],
+      "Resource": [
+        "${aws_secretsmanager_secret.gh_docker.arn}"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "ecs" {
+  role = aws_iam_role.ecs.name
+  policy_arn = aws_iam_policy.ecs.arn
+}
+
+resource "aws_iam_role" "ecs" {
+  name = "ecsTaskExecutionRole"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
 resource "aws_ecs_task_definition" "app" {
   family = "app"
   network_mode = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu = var.fargate_cpu
   memory = var.fargate_memory
+  execution_role_arn = aws_iam_role.ecs.arn
 
   container_definitions = <<EOF
 [
   {
     "cpu": ${var.fargate_cpu},
     "image": "${var.app_image}",
+    "repositoryCredentials": {
+        "credentialsParameter": "${aws_secretsmanager_secret.gh_docker.arn}"
+    },
     "memory": ${var.fargate_memory},
     "name": "app",
     "networkMode": "awsvpc",
