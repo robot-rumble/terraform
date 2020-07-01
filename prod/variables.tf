@@ -30,4 +30,3 @@ variable "lambda_timeout" {
   default = 60
 }
 
-variable "secret_key" {}
