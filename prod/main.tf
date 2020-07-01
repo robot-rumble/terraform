@@ -113,3 +113,14 @@ resource "aws_lambda_event_source_mapping" "battle_queue_in" {
   function_name    = aws_lambda_function.battle_runner.arn
 }
 
+output "BATTLE_QUEUE_IN_URL" {
+  value = aws_sqs_queue.battle_queue_in.id
+}
+
+output "BATTLE_QUEUE_OUT_URL" {
+  value = aws_sqs_queue.battle_queue_out.id
+}
+
+output "S3_URL" {
+  value = aws_s3_bucket.static_files.bucket_domain_name
+}
