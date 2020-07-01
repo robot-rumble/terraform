@@ -5,6 +5,11 @@ provider "aws" {
 resource "aws_s3_bucket" "static_files" {
   bucket = "robot-static-files"
   acl    = "public-read"
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET"]
+    allowed_origins = ["*"]
+  }
 }
 
 resource "aws_s3_bucket_policy" "static_files" {
