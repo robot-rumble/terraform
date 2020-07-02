@@ -2,41 +2,6 @@ provider "aws" {
   region = var.aws_region
 }
 
-resource "aws_s3_bucket" "static_files" {
-  bucket = "robot-static-files"
-  acl    = "public-read"
-  cors_rule {
-    allowed_headers = ["*"]
-    allowed_methods = ["GET"]
-    allowed_origins = ["*"]
-  }
-}
-
-resource "aws_s3_bucket_policy" "static_files" {
-  bucket = aws_s3_bucket.static_files.id
-
-  policy = <<EOF
-{
-  "Version":"2012-10-17",
-  "Statement":[
-    {
-      "Sid":"PublicRead",
-      "Effect":"Allow",
-      "Principal": "*",
-      "Action":["s3:GetObject"],
-      "Resource":["${aws_s3_bucket.static_files.arn}/*"]
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_s3_bucket_object" "lambda" {
-  bucket = aws_s3_bucket.static_files.bucket
-  key    = "lambda.zip"
-  source = "../../logic/target/x86_64-unknown-linux-musl/release/lambda.zip"
-}
-
 resource "aws_sqs_queue" "battle_queue_in" {
   name                       = "battle-input-queue"
   visibility_timeout_seconds = var.lambda_timeout
@@ -47,7 +12,7 @@ resource "aws_sqs_queue" "battle_queue_out" {
 }
 
 resource "aws_lambda_function" "battle_runner" {
-  s3_bucket     = aws_s3_bucket.static_files.id
+  s3_bucket     = aws_s3_bucket.build.id
   s3_key        = aws_s3_bucket_object.lambda-build.key
   function_name = "battle-runner"
   runtime       = "provided"
@@ -124,8 +89,4 @@ output "BATTLE_QUEUE_IN_URL" {
 
 output "BATTLE_QUEUE_OUT_URL" {
   value = aws_sqs_queue.battle_queue_out.id
-}
-
-output "S3_URL" {
-  value = aws_s3_bucket.static_files.bucket_domain_name
 }
