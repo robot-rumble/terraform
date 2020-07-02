@@ -48,7 +48,7 @@ resource "aws_sqs_queue" "battle_queue_out" {
 
 resource "aws_lambda_function" "battle_runner" {
   s3_bucket     = aws_s3_bucket.static_files.id
-  s3_key        = aws_s3_bucket_object.lambda.key
+  s3_key        = aws_s3_bucket_object.lambda-build.key
   function_name = "battle-runner"
   runtime       = "provided"
   timeout       = var.lambda_timeout
