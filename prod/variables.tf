@@ -23,10 +23,10 @@ variable "fargate_memory" {
 }
 
 variable "lambda_memory_size" {
-  default = 128
+  default = 1536
 }
 
 variable "lambda_timeout" {
-  default = 60
+  default = 180
 }
 
