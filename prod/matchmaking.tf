@@ -29,7 +29,7 @@ resource "aws_lambda_function" "battle_runner" {
 }
 
 resource "aws_iam_policy" "lambda" {
-  name = "lambda_logging"
+  name = "lambda-policy"
   path = "/"
 
   policy = <<EOF
@@ -41,6 +41,7 @@ resource "aws_iam_policy" "lambda" {
             "Action": [
                 "sqs:ReceiveMessage",
                 "sqs:DeleteMessage",
+                "sqs:SendMessage",
                 "sqs:GetQueueAttributes",
                 "logs:CreateLogGroup",
                 "logs:CreateLogStream",
