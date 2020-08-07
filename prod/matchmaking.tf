@@ -13,7 +13,8 @@ resource "aws_sqs_queue" "battle_queue_out" {
 
 resource "aws_lambda_function" "battle_runner" {
   s3_bucket     = aws_s3_bucket.build.id
-  s3_key        = aws_s3_bucket_object.lambda-build.key
+  s3_key        = aws_s3_bucket_object.lambda_build.key
+  layers        = [aws_lambda_layer_version.wasmer_cache.arn]
   function_name = "battle-runner"
   runtime       = "provided"
   timeout       = var.lambda_timeout
@@ -26,6 +27,25 @@ resource "aws_lambda_function" "battle_runner" {
       BATTLE_QUEUE_OUT_URL = aws_sqs_queue.battle_queue_out.id
     }
   }
+}
+
+resource "aws_s3_bucket_object" "lambda_build" {
+  bucket = aws_s3_bucket.build.bucket
+  key    = "lambda.zip"
+  source = "../../logic/lambda-dist/lambda.zip"
+}
+
+resource "aws_lambda_layer_version" "wasmer_cache" {
+  layer_name          = "wasmer-cache"
+  s3_bucket           = aws_s3_bucket.build.id
+  s3_key              = aws_s3_bucket_object.wasmer_cache.key
+  compatible_runtimes = ["provided"]
+}
+
+resource "aws_s3_bucket_object" "wasmer_cache" {
+  bucket = aws_s3_bucket.build.bucket
+  key    = "wasmer-cache.zip"
+  source = "../../logic/lambda-dist/wasmer-cache.zip"
 }
 
 resource "aws_iam_policy" "lambda" {

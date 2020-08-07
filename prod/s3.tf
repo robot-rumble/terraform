@@ -3,12 +3,6 @@ resource "aws_s3_bucket" "build" {
   acl    = "private"
 }
 
-resource "aws_s3_bucket_object" "lambda-build" {
-  bucket = aws_s3_bucket.build.bucket
-  key    = "lambda.zip"
-  source = "../../logic/target/x86_64-unknown-linux-musl/release/lambda.zip"
-}
-
 resource "aws_s3_bucket" "public" {
   bucket = "rr-public-assets"
   acl    = "private"
