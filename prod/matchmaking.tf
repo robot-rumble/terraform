@@ -111,3 +111,7 @@ output "BATTLE_QUEUE_IN_URL" {
 output "BATTLE_QUEUE_OUT_URL" {
   value = aws_sqs_queue.battle_queue_out.id
 }
+
+output "LAYER_NAME" {
+  value = aws_lambda_layer_version.wasmer_cache.layer_name
+}
