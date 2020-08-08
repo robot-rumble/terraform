@@ -91,3 +91,7 @@ output "S3_BUCKET_PUBLIC" {
 output "CLOUDFRONT_URL" {
   value = aws_cloudfront_distribution.s3_distribution.domain_name
 }
+
+output "CLOUDFRONT_ID" {
+  value = aws_cloudfront_distribution.s3_distribution.id
+}
