@@ -34,6 +34,10 @@ variable "domain" {
   default = "robotrumble.org"
 }
 
+variable "boxfuse_domain" {
+  default = "rr-outkine.boxfuse.io"
+}
+
 variable "cloudflare_email" {}
 
 variable "cloudflare_api_key" {}
