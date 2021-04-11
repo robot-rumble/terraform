@@ -30,3 +30,13 @@ variable "lambda_timeout" {
   default = 900
 }
 
+variable "domain" {
+  default = "robotrumble.org"
+}
+
+variable "cloudflare_email" {}
+
+variable "cloudflare_api_key" {}
+
+variable "cloudflare_zone_id" {}
+

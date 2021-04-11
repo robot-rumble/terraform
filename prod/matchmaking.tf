@@ -1,7 +1,3 @@
-provider "aws" {
-  region = var.aws_region
-}
-
 resource "aws_sqs_queue" "battle_queue_in" {
   name                       = "battle-input-queue"
   visibility_timeout_seconds = var.lambda_timeout
