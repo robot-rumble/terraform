@@ -27,7 +27,7 @@ variable "lambda_memory_size" {
 }
 
 variable "lambda_timeout" {
-  default = 900
+  default = 30
 }
 
 variable "domain" {
