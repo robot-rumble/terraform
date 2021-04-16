@@ -21,6 +21,7 @@ resource "aws_lambda_function" "battle_runner" {
     variables = {
       RUST_BACKTRACE       = 1
       BATTLE_QUEUE_OUT_URL = aws_sqs_queue.battle_queue_out.id
+      SENTRY_DSN           = var.sentry_dsn
     }
   }
 }
