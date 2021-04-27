@@ -26,8 +26,9 @@ variable "lambda_memory_size" {
   default = 3008
 }
 
+// 60 (timeout for one robot) * 2 + 5 (extra seconds to give time for timeout code to activate within lambda)
 variable "lambda_timeout" {
-  default = 30
+  default = 125
 }
 
 variable "domain" {
